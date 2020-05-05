@@ -50,7 +50,7 @@ def load_messages() -> list:
     return messages
 
 # returns lists that correspond with the response times after sender transition
-def response_times(messages) -> list:
+def calculate_response_times(messages) -> list:
     # get senders
     senders = {}
     for message in messages:
@@ -71,6 +71,3 @@ def response_times(messages) -> list:
 # https://stackoverflow.com/questions/3617170/average-timedelta-in-list
 def average_timedelta(timedeltas):
     return sum(timedeltas, timedelta(0)) / len(timedeltas)
-
-messages = load_messages()
-times = response_times(messages)
