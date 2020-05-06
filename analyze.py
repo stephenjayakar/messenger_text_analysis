@@ -34,6 +34,29 @@ class Message:
         content = self.content
         return f'{sender}: {content}'
 
+# messages sent from the same person in succession
+class MessageBlock:
+    def __init__(self, message):
+        self.messages = [message]
+
+    def add_message(self, message):
+        self.messages.append(message)
+
+    @property
+    def sender(self):
+        return self.messages[0].sender
+
+    @property
+    def timestamps(self):
+        return [m.timestamp for m in self.messages]
+
+    def first_timestamp(self):
+        return self.messages[0].timestamp
+
+    def __str__(self) -> str:
+        return '\n'.join(map(str, self.messages))
+
+
 def load_messages() -> list:
     TEMPLATE = 'data/message_{}.json'
     messages = []
@@ -47,27 +70,31 @@ def load_messages() -> list:
         FILE.close()
         i += 1
     messages = list(map(Message, reversed(messages)))
-    return messages
+
+    # convert to message blocks
+    first_block = MessageBlock(messages[0])
+    message_blocks = [first_block]
+    for message in messages[1:]:
+        current_block = message_blocks[-1]
+        if current_block.sender == message.sender:
+            current_block.add_message(message)
+        else:
+            message_blocks.append(MessageBlock(message))
+    return message_blocks
 
 # returns lists that correspond with the response times after sender transition
-def calculate_response_times(messages) -> list:
+# list has tuples of form (index, timedelta)
+def calculate_response_times(message_blocks) -> list:
     # get senders
     senders = {}
-    for message in messages:
-        sender = message.sender
+    for block in message_blocks:
+        sender = block.sender
         if sender not in senders:
             senders[sender] = []
 
-    for i in range(1, len(messages)):
-        message = messages[i]
-        sender = message.sender
-        # test if it's a sender transition
-        previous_message = messages[i - 1]
-        if previous_message.sender != sender:
-            delta = message.timestamp - previous_message.timestamp
-            senders[sender].append(delta)
+    for i in range(1, len(message_blocks)):
+        block = message_blocks[i]
+        previous_block = message_blocks[i - 1]
+        delta = block.first_timestamp() - previous_block.first_timestamp()
+        senders[block.sender].append((i, delta))
     return senders
-
-# https://stackoverflow.com/questions/3617170/average-timedelta-in-list
-def average_timedelta(timedeltas):
-    return sum(timedeltas, timedelta(0)) / len(timedeltas)
