@@ -9,16 +9,16 @@ class Message:
             if 'content' in message_obj:
                 self.content = message_obj['content']
             elif 'sticker' in message_obj:
-                self.content = 'sticker'
+                self.content = '[sticker]'
             elif 'photos' in message_obj or 'gifs' in message_obj:
-                self.content = 'photo'
+                self.content = '[photo]'
             elif 'videos' in message_obj:
-                self.content = 'video'
+                self.content = '[video]'
             elif 'audio_files' in message_obj:
-                self.content = 'audio'
+                self.content = '[audio]'
             else:
                 print(f"unknown obj: {message_obj}")
-                self.content = 'unknown'
+                self.content = '[unknown]'
 
         def __str__(self):
             return self.content
@@ -53,6 +53,10 @@ class MessageBlock:
     def first_timestamp(self):
         return self.messages[0].timestamp
 
+    def first_month(self):
+        timestamp = self.first_timestamp()
+        return timestamp.month
+
     def __str__(self) -> str:
         return '\n'.join(map(str, self.messages))
 
@@ -81,6 +85,16 @@ def load_messages() -> list:
         else:
             message_blocks.append(MessageBlock(message))
     return message_blocks
+
+def group_messages_by_month(message_blocks):
+    month_messages = {}
+    for block in message_blocks:
+        # just assume messages in the same block are in the same month
+        month = block.first_month()
+        if month not in month_messages:
+            month_messages[month] = []
+        month_messages[month].append(block)
+    return month_messages
 
 # returns lists that correspond with the response times after sender transition
 # list has tuples of form (index, timedelta)
