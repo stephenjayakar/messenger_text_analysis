@@ -58,7 +58,7 @@ class MessageBlock:
         return timestamp.month
 
     def __str__(self) -> str:
-        return '\n'.join(map(str, self.messages))
+        return str(self.first_timestamp()) + '\n' + '\n'.join(map(str, self.messages))
 
 
 def load_messages() -> list:
